@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from pipeline import DataTransformPipeLine
-
+from metrics import Metrics
 data = pd.read_csv('Sales_Transactions_Dataset_Weekly.csv')
 data= data.filter(regex=r'Product|W')
 melt = data.melt(id_vars='Product_Code', var_name='Week', value_name='Sales')
@@ -36,4 +36,4 @@ pipeobj=DataTransformPipeLine(features=features,index=[0,7])
 pipe=pipeobj.get_pipe()
 
 pipe.fit(melt_train,ytr)
-print(wmape(pipe.predict(melt_valid),melt_valid['sales_next_week']))
+print(Metrics.wmape(pipe.predict(melt_valid),melt_valid['sales_next_week']))
