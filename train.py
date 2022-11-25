@@ -1,0 +1,39 @@
+import pandas as pd
+import numpy as np
+from pipeline import DataTransformPipeLine
+
+data = pd.read_csv('Sales_Transactions_Dataset_Weekly.csv')
+data= data.filter(regex=r'Product|W')
+melt = data.melt(id_vars='Product_Code', var_name='Week', value_name='Sales')
+melt['Product_Code'] = melt['Product_Code'].str.extract('(\d+)', expand=False).astype(int)
+melt['Week'] = melt['Week'].str.extract('(\d+)', expand=False).astype(int)
+
+melt = melt.sort_values(['Week', 'Product_Code'])
+valid_split_point=40
+melt_train = melt[melt['Week'] < valid_split_point].copy()
+melt_valid = melt[melt['Week'] >= valid_split_point].copy()
+
+melt_train['sales_next_week'] = melt_train.groupby("Product_Code")['Sales'].shift(-1)
+melt_valid['sales_next_week'] = melt_valid.groupby("Product_Code")['Sales'].shift(-1)
+melt_train = melt_train.dropna()
+melt_valid = melt_valid.dropna()
+
+
+melt_train["lag_sales_1"] = melt_train.groupby("Product_Code")['Sales'].shift(1)
+melt_valid["lag_sales_1"] = melt_valid.groupby("Product_Code")['Sales'].shift(1)
+melt_train["diff_sales_1"] = melt_train.groupby("Product_Code")['Sales'].diff(1)
+melt_valid["diff_sales_1"] = melt_valid.groupby("Product_Code")['Sales'].diff(1)
+melt_train["mean_sales_4"] = melt_train.groupby("Product_Code")['Sales'].rolling(4).mean().reset_index(level=0, drop=True)
+
+melt_valid["mean_sales_4"] = melt_valid.groupby("Product_Code")['Sales'].rolling(4).mean().reset_index(level=0, drop=True)
+
+
+
+features = ['Sales', 'lag_sales_1', 'diff_sales_1', 'mean_sales_4']
+ytr = melt_train['sales_next_week']
+
+pipeobj=DataTransformPipeLine(features=features,index=[0,7])
+pipe=pipeobj.get_pipe()
+
+pipe.fit(melt_train,ytr)
+print(wmape(pipe.predict(melt_valid),melt_valid['sales_next_week']))
