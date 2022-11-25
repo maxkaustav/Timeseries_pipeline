@@ -19,16 +19,6 @@ melt_train = melt_train.dropna()
 melt_valid = melt_valid.dropna()
 
 
-melt_train["lag_sales_1"] = melt_train.groupby("Product_Code")['Sales'].shift(1)
-melt_valid["lag_sales_1"] = melt_valid.groupby("Product_Code")['Sales'].shift(1)
-melt_train["diff_sales_1"] = melt_train.groupby("Product_Code")['Sales'].diff(1)
-melt_valid["diff_sales_1"] = melt_valid.groupby("Product_Code")['Sales'].diff(1)
-melt_train["mean_sales_4"] = melt_train.groupby("Product_Code")['Sales'].rolling(4).mean().reset_index(level=0, drop=True)
-
-melt_valid["mean_sales_4"] = melt_valid.groupby("Product_Code")['Sales'].rolling(4).mean().reset_index(level=0, drop=True)
-
-
-
 features = ['Sales', 'lag_sales_1', 'diff_sales_1', 'mean_sales_4']
 ytr = melt_train['sales_next_week']
 yval=melt_valid['sales_next_week']
